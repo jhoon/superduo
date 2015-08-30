@@ -1,9 +1,12 @@
 package it.jaschke.alexandria;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -17,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import it.jaschke.alexandria.data.AlexandriaContract;
@@ -96,12 +100,29 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
                 // are using an external app.
                 //when you're done, remove the toast below.
                 Context context = getActivity();
+                final String packageName = "com.google.zxing.client.android";
 
                 Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-                intent.setPackage("com.google.zxing.client.android");
+                intent.setPackage(packageName);
                 intent.putExtra("SCAN_MODE", "ONE_D_MODE"); // String
                 if (intent.resolveActivity(context.getPackageManager()) != null) {
                     startActivityForResult(intent, 0);
+                } else {
+                    // direct user to install zxing
+                    AlertDialog.Builder installDialog = new AlertDialog.Builder(getActivity());
+                    installDialog.setTitle(getString(R.string.zxing_dialog_title));
+                    installDialog.setMessage(getString(R.string.zxing_dialog_message));
+                    installDialog.setPositiveButton(getString(R.string.zxing_dialog_yes), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Uri uri = Uri.parse("market://details?id=" + packageName);
+                            Intent installIntent = new Intent(Intent.ACTION_VIEW, uri);
+                            startActivity(installIntent);
+                        }
+                    });
+                    installDialog.setNegativeButton(getString(R.string.zxing_dialog_no), null);
+                    installDialog.setCancelable(true);
+                    installDialog.show();
                 }
 
             }
@@ -142,6 +163,7 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
                 ean.setText(contents);
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 // Handle cancel
+                Toast.makeText(getActivity(), getString(R.string.scanner_no_result), Toast.LENGTH_SHORT).show();
             }
         }
     }
