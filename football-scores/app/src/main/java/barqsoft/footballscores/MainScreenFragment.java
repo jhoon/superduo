@@ -38,6 +38,7 @@ public class MainScreenFragment extends Fragment implements LoaderManager.Loader
     {
         fragmentdate[0] = date;
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              final Bundle savedInstanceState) {
