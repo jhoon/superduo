@@ -25,6 +25,15 @@
     <string name="back_button">go back</string>
     <string name="share_text">A must read book: </string>
 
+    <string name="zxing_dialog_title">App not installed</string>
+    <string name="zxing_dialog_message">You need to download the Barcode App from the Play Store to use this functionality.</string>
+    <string name="zxing_dialog_yes">Ok</string>
+    <string name="zxing_dialog_no">Not for now</string>
+
+    <string name="scanner_no_result">The scanner returned no result</string>
+
+    <string name="network_unavailable">Couldn\'t fetch ISBN info. Network access is not available at the moment.</string>
+
 <!-- TODO: Remove or change this placeholder text -->
     <string name="about_text">This application gets book information from a Google API. All titles, cover images, and author information come from there.
     The original version of this app was built by Sascha Jaschke, and a modified version is given to students in the Udacity Android Nanodegree program. </string>
