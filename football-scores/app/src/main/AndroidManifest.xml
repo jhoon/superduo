@@ -37,7 +37,9 @@
 
         <service android:name=".service.myFetchService" />
 
-        <receiver android:name=".widget.ScoresWidget" >
+        <receiver
+            android:name=".widget.ScoresWidget"
+            android:label="@string/appwidget_text">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
