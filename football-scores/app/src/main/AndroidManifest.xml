@@ -39,7 +39,7 @@
 
         <receiver
             android:name=".widget.ScoresWidget"
-            android:label="@string/appwidget_text">
+            android:label="@string/appwidget_text" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -48,6 +48,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/scores_widget_info" />
         </receiver>
+
+        <service
+            android:name=".service.WidgetUpdateService"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>
