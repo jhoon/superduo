@@ -1,9 +1,12 @@
 package it.jaschke.alexandria;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -23,6 +26,7 @@ import android.widget.Toast;
 import it.jaschke.alexandria.data.AlexandriaContract;
 import it.jaschke.alexandria.services.BookService;
 import it.jaschke.alexandria.services.DownloadImage;
+import it.jaschke.alexandria.util.Util;
 
 
 public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -74,16 +78,23 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
                 if(ean.length()==10 && !ean.startsWith("978")){
                     ean="978"+ean;
                 }
-                if(ean.length()<13){
+
+                // only clear while ISBN entry is less than 10 characters
+                if(ean.length()<10){
                     clearFields();
                     return;
                 }
-                //Once we have an ISBN, start a book intent
-                Intent bookIntent = new Intent(getActivity(), BookService.class);
-                bookIntent.putExtra(BookService.EAN, ean);
-                bookIntent.setAction(BookService.FETCH_BOOK);
-                getActivity().startService(bookIntent);
-                AddBook.this.restartLoader();
+
+                if (Util.isNetworkAvailable(getActivity())){
+                    //Once we have an ISBN (and verified network access), start a book intent
+                    Intent bookIntent = new Intent(getActivity(), BookService.class);
+                    bookIntent.putExtra(BookService.EAN, ean);
+                    bookIntent.setAction(BookService.FETCH_BOOK);
+                    getActivity().startService(bookIntent);
+                    AddBook.this.restartLoader();
+                } else {
+                    Toast.makeText(getActivity(), getString(R.string.network_unavailable), Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -97,11 +108,30 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
                 // are using an external app.
                 //when you're done, remove the toast below.
                 Context context = getActivity();
-                CharSequence text = "This button should let you scan a book for its barcode!";
-                int duration = Toast.LENGTH_SHORT;
+                final String packageName = "com.google.zxing.client.android";
 
-                Toast toast = Toast.makeText(context, text, duration);
-                toast.show();
+                Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+                intent.setPackage(packageName);
+                intent.putExtra("SCAN_MODE", "ONE_D_MODE"); // String
+                if (intent.resolveActivity(context.getPackageManager()) != null) {
+                    startActivityForResult(intent, 0);
+                } else {
+                    // direct user to install zxing
+                    AlertDialog.Builder installDialog = new AlertDialog.Builder(getActivity());
+                    installDialog.setTitle(getString(R.string.zxing_dialog_title));
+                    installDialog.setMessage(getString(R.string.zxing_dialog_message));
+                    installDialog.setPositiveButton(getString(R.string.zxing_dialog_yes), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Uri uri = Uri.parse("market://details?id=" + packageName);
+                            Intent installIntent = new Intent(Intent.ACTION_VIEW, uri);
+                            startActivity(installIntent);
+                        }
+                    });
+                    installDialog.setNegativeButton(getString(R.string.zxing_dialog_no), null);
+                    installDialog.setCancelable(true);
+                    installDialog.show();
+                }
 
             }
         });
@@ -130,6 +160,20 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         }
 
         return rootView;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (requestCode == 0) {
+            if (resultCode == Activity.RESULT_OK) {
+                String contents = intent.getStringExtra("SCAN_RESULT");
+                // Handle successful scan
+                ean.setText(contents);
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                // Handle cancel
+                Toast.makeText(getActivity(), getString(R.string.scanner_no_result), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void restartLoader(){
@@ -172,7 +216,7 @@ public class AddBook extends Fragment implements LoaderManager.LoaderCallbacks<C
         ((TextView) rootView.findViewById(R.id.authors)).setLines(authorsArr.length);
         ((TextView) rootView.findViewById(R.id.authors)).setText(authors.replace(",","\n"));
         String imgUrl = data.getString(data.getColumnIndex(AlexandriaContract.BookEntry.IMAGE_URL));
-        if(Patterns.WEB_URL.matcher(imgUrl).matches()){
+        if(Patterns.WEB_URL.matcher(imgUrl).matches() && Util.isNetworkAvailable(getActivity())){
             new DownloadImage((ImageView) rootView.findViewById(R.id.bookCover)).execute(imgUrl);
             rootView.findViewById(R.id.bookCover).setVisibility(View.VISIBLE);
         }
