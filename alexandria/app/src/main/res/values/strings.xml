@@ -31,7 +31,6 @@
     <string name="zxing_dialog_no">Not for now</string>
 
     <string name="scanner_no_result">The scanner returned no result</string>
-    <string name="no_authors">No authors for this book</string>
 
     <string name="network_unavailable">Couldn\'t fetch ISBN info. Network access is not available at the moment.</string>
 
